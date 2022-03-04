@@ -45,7 +45,8 @@ def detection():
             # Or instead, use the known face with the smallest distance to the new face
             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
             best_match_index = np.argmin(face_distances)
-            if matches[best_match_index]:
+            print(face_distances[best_match_index])
+            if face_distances[best_match_index]<0.4:
                 name = known_face_names[best_match_index]
 
             face_names.append(name)
@@ -73,7 +74,7 @@ def detection():
     cv2.imshow('Video', frame)
 
     # Hit 'q' on the keyboard to quit!
-    k = cv2.waitKey(33)
+    k = cv2.waitKey(1)
     if k==27:    # Esc key to stop
         return True
     elif k==97:  # normally -1 returned,so don't print it
@@ -89,7 +90,7 @@ def save():
     cv2.imshow('Video', frame)
 
     # Hit 'q' on the keyboard to quit!
-    k = cv2.waitKey(33)
+    k = cv2.waitKey(1)
     if k==27:    # Esc key to stop
         return True
     elif k==97 and not taping:  # normally -1 returned,so don't print it
