@@ -15,13 +15,28 @@ face_names = []
 process_this_frame = True
 
 def init ():
-    dir_list = os.listdir("./faces")
-    for img in dir_list:
-        image = face_recognition.load_image_file("./faces/"+img)
-        face_encoding = face_recognition.face_encodings(image)[0]   
-        name = img.replace(".jpg","")
-        known_face_encodings.append(face_encoding)
-        known_face_names.append(name)
+    train_dir = os.listdir('./faces-svm/')
+
+    # Loop through each person in the training directory
+    for person in train_dir:
+        pix = os.listdir("./faces-svm/" + person)
+        encodings = []
+        # Loop through each training image for the current person
+        for person_img in pix:
+            # Get the face encodings for the face in each image file
+            face = face_recognition.load_image_file("./faces-svm/" + person + "/" + person_img)
+            face_bounding_boxes = face_recognition.face_locations(face)
+
+            #If training image contains exactly one face
+            if len(face_bounding_boxes) == 1:
+                face_enc = face_recognition.face_encodings(face)[0]
+                # Add face encoding for current image with corresponding label (name) to the training data
+                encodings.append(face_enc)
+            else:
+                print(person + "/" + person_img + " was skipped and can't be used for training")
+        known_face_names.append(person)
+        known_face_encodings.append(encodings)
+
 init()
 
 def detection(): 
@@ -34,20 +49,15 @@ def detection():
         face_names = []
         for face_encoding in face_encodings:
             # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
             name = "Unknown"
-
-            # # If a match was found in known_face_encodings, just use the first one.
-            # if True in matches:
-            #     first_match_index = matches.index(True)
-            #     name = known_face_names[first_match_index]
-
-            # Or instead, use the known face with the smallest distance to the new face
-            face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            print(face_distances[best_match_index])
-            if face_distances[best_match_index]<0.4:
-                name = known_face_names[best_match_index]
+            distances = []
+            for sample in known_face_encodings:
+                face_distances = face_recognition.face_distance(sample, face_encoding)
+                avg = np.average(face_distances)
+                distances.append(avg)
+            ma = np.argmin(distances)
+            if distances[ma]<0.4:
+                name = known_face_names[ma]
 
             face_names.append(name)
 
